@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
 import { timelines, registrationSteps, votingMethods, generalInfo } from './data.js';
+import { GoogleGenAI } from '@google/genai';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,6 +12,9 @@ const __dirname = path.dirname(__filename);
 function startWebServer() {
   const app = express();
   const PORT = process.env.PORT || 8080; // Cloud Run requires listening on PORT
+
+  // Middleware to parse JSON
+  app.use(express.json());
 
   // Serve static files from 'public' directory
   app.use(express.static(path.join(__dirname, 'public')));
@@ -23,6 +27,68 @@ function startWebServer() {
       votingMethods,
       generalInfo
     });
+  });
+
+  // Chatbot API endpoint
+  app.post('/api/chat', async (req, res) => {
+    const userMessage = req.body.message;
+    
+    if (!process.env.GEMINI_API_KEY) {
+        console.warn(chalk.yellow('Warning: GEMINI_API_KEY is not set. Using fallback mock responder.'));
+        // Simulate network delay for realism
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        let reply = "I'm a simulated assistant. Please provide your API key in the environment variables (GEMINI_API_KEY) to use the real AI!";
+        if (userMessage) {
+            const lowerMsg = userMessage.toLowerCase();
+            if (lowerMsg.includes('hello') || lowerMsg.includes('hi')) {
+                reply = "Hello there! How can I help you with the election guide today? (Mock Response)";
+            } else if (lowerMsg.includes('register') || lowerMsg.includes('vote')) {
+                reply = "You can find registration and voting information in the tabs above. (Mock Response)";
+            } else if (lowerMsg.includes('deadline') || lowerMsg.includes('when')) {
+                reply = "Check out the 'Timelines & Deadlines' tab for important dates. (Mock Response)";
+            } else {
+                reply = `You said: "${userMessage}". I'm currently in mock mode. Please add your GEMINI_API_KEY.`;
+            }
+        }
+        return res.json({ reply });
+    }
+
+    try {
+        const ai = new GoogleGenAI({}); // Automatically picks up process.env.GEMINI_API_KEY
+        
+        const systemInstruction = `
+You are the Election Assistant AI, a helpful, friendly, and knowledgeable assistant for our interactive election guide app.
+Your goal is to answer user questions about the election using ONLY the context provided below. Be concise and conversational.
+Do not make up any dates or facts that are not in the provided data.
+
+CONTEXT:
+--- General Information ---
+${generalInfo}
+
+--- Timelines and Deadlines ---
+${JSON.stringify(timelines, null, 2)}
+
+--- Registration Steps ---
+${JSON.stringify(registrationSteps, null, 2)}
+
+--- Voting Methods ---
+${JSON.stringify(votingMethods, null, 2)}
+        `;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: userMessage,
+            config: {
+                systemInstruction: systemInstruction,
+            }
+        });
+
+        res.json({ reply: response.text });
+    } catch (error) {
+        console.error(chalk.red('Error calling Gemini API:'), error);
+        res.json({ reply: "I'm sorry, I encountered an error while processing your request. Please try again later." });
+    }
   });
 
   // Fallback to index.html for all other requests (SPA-like behavior)

@@ -71,4 +71,98 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error fetching data:', error);
             generalInfoText.textContent = "Failed to load election data. Please try again later.";
         });
+
+    // Chatbot Logic
+    const chatToggleBtn = document.getElementById('chat-toggle-btn');
+    const chatWindow = document.getElementById('chat-window');
+    const closeChatBtn = document.getElementById('close-chat-btn');
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+    const sendChatBtn = document.getElementById('send-chat-btn');
+
+    // Toggle chat window
+    chatToggleBtn.addEventListener('click', () => {
+        chatWindow.classList.toggle('hidden');
+        if (!chatWindow.classList.contains('hidden')) {
+            chatInput.focus();
+        }
+    });
+
+    closeChatBtn.addEventListener('click', () => {
+        chatWindow.classList.add('hidden');
+    });
+
+    // Handle sending message
+    const sendMessage = async () => {
+        const messageText = chatInput.value.trim();
+        if (!messageText) return;
+
+        // Add user message
+        appendMessage('user', messageText);
+        chatInput.value = '';
+
+        // Add typing indicator
+        const typingId = showTypingIndicator();
+
+        try {
+            // Send to backend
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: messageText })
+            });
+
+            const data = await response.json();
+            
+            // Remove typing indicator and add bot response
+            removeMessage(typingId);
+            if (data.reply) {
+                appendMessage('bot', data.reply);
+            } else {
+                appendMessage('bot', 'Sorry, I encountered an error.');
+            }
+        } catch (error) {
+            console.error('Chat error:', error);
+            removeMessage(typingId);
+            appendMessage('bot', 'Sorry, I am currently offline.');
+        }
+    };
+
+    sendChatBtn.addEventListener('click', sendMessage);
+    
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    // Helpers
+    function appendMessage(sender, text) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${sender}-message`;
+        msgDiv.textContent = text;
+        chatMessages.appendChild(msgDiv);
+        scrollToBottom();
+    }
+
+    function showTypingIndicator() {
+        const id = 'typing-' + Date.now();
+        const indicatorHtml = `
+            <div id="${id}" class="typing-indicator">
+                <span></span><span></span><span></span>
+            </div>
+        `;
+        chatMessages.insertAdjacentHTML('beforeend', indicatorHtml);
+        scrollToBottom();
+        return id;
+    }
+
+    function removeMessage(id) {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+    }
+
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 });

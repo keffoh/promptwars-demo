@@ -61,6 +61,30 @@
         </footer>
     </main>
 
+    <!-- Chatbot Widget -->
+    <div id="chat-widget" class="chat-widget">
+        <div id="chat-window" class="chat-window hidden">
+            <div class="chat-header">
+                <h3>Election Assistant AI</h3>
+                <button id="close-chat-btn" class="close-btn">&times;</button>
+            </div>
+            <div id="chat-messages" class="chat-messages">
+                <div class="message bot-message">
+                    Hello! I'm the Election Assistant AI. How can I help you today?
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Type your question..." autocomplete="off">
+                <button id="send-chat-btn" class="send-btn">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+        </div>
+        <button id="chat-toggle-btn" class="chat-toggle-btn">
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        </button>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
