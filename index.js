@@ -29,6 +29,27 @@ function startWebServer() {
     });
   });
 
+  // Voter Registration API endpoint (Mocked DB save)
+  app.post('/api/register', async (req, res) => {
+    const formData = req.body;
+    
+    // Simulate network and DB delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    console.log(chalk.green('\n📝 New Voter Registration Received:'));
+    console.log(chalk.cyan(`Name:`), formData.fullName);
+    console.log(chalk.cyan(`DOB:`), formData.dob);
+    console.log(chalk.cyan(`Level/Grade:`), formData.level);
+    console.log(chalk.cyan(`Email:`), formData.email);
+    console.log(chalk.cyan(`Address:`), formData.address);
+    console.log(chalk.gray('-----------------------------------------\n'));
+
+    res.json({ 
+        success: true, 
+        message: 'Registration submitted successfully!' 
+    });
+  });
+
   // Chatbot API endpoint
   app.post('/api/chat', async (req, res) => {
     const userMessage = req.body.message;

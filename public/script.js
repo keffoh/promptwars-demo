@@ -165,4 +165,57 @@ document.addEventListener('DOMContentLoaded', () => {
     function scrollToBottom() {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
+
+    // Voter Registration Form Logic
+    const voterForm = document.getElementById('voter-form');
+    const formMessage = document.getElementById('form-message');
+
+    if (voterForm) {
+        voterForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = voterForm.querySelector('.submit-btn');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Submitting...';
+            submitBtn.disabled = true;
+
+            const formData = {
+                fullName: document.getElementById('fullName').value,
+                dob: document.getElementById('dob').value,
+                level: document.getElementById('level').value,
+                email: document.getElementById('email').value,
+                address: document.getElementById('address').value
+            };
+
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                formMessage.textContent = result.message || 'Registration submitted successfully!';
+                formMessage.className = 'form-message success';
+                
+                if (result.success) {
+                    voterForm.reset();
+                }
+            } catch (error) {
+                console.error('Form submission error:', error);
+                formMessage.textContent = 'An error occurred. Please try again.';
+                formMessage.className = 'form-message error';
+            } finally {
+                formMessage.classList.remove('hidden');
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+                
+                // Hide message after 5 seconds
+                setTimeout(() => {
+                    formMessage.classList.add('hidden');
+                }, 5000);
+            }
+        });
+    }
 });
